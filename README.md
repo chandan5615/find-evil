@@ -483,8 +483,9 @@ For improvements or bug fixes:
 
 ## License
 
-Built for SANS Hackathon 2024  
-Open for educational and authorized forensic analysis use only
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+**Summary**: You are free to use, modify, and distribute this software for any purpose, including commercial use, provided that you include the original copyright notice and license text.
 
 ---
 
