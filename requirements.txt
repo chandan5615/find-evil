@@ -1,0 +1,12 @@
+mcp>=1.0.0
+anthropic>=0.30.0
+aiohttp>=3.9.0
+volatility3>=2.5.0
+python-evtx>=0.8.0
+pytsk3>=20231101
+rich>=13.7.0
+textual>=0.47.0
+pydantic>=2.5.0
+colorama>=0.4.6
+python-dateutil>=2.8.2
+requests>=2.31.0

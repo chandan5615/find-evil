@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs (keep structure, ignore content)
+logs/*.json
+logs/*.md
+!logs/.gitkeep
+
+# Reports (keep structure, ignore content)
+reports/
+!reports/.gitkeep
+
+# Case data (keep structure, ignore content)
+case_data/*.e01
+case_data/*.dd
+case_data/*.dmp
+case_data/*.bin
+case_data/*.vmdk
+case_data/*.evtx
+!case_data/README.md
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# guide
+.GITHUB_PUSH_GUIDE.md
