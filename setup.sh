@@ -114,31 +114,53 @@ setup_directories() {
 setup_venv() {
     print_info "Setting up Python virtual environment..."
     
-    if [[ -d venv ]]; then
-        print_warn "venv/ already exists — skipping creation"
-    else
-        python3 -m venv venv
-        print_ok "Virtual environment created"
+    # Check if venv needs to be created or repaired
+    if [[ -d venv && -f venv/bin/python ]]; then
+        print_warn "venv/ already exists and is valid — skipping creation"
+        return 0
     fi
     
-    # Activate venv
-    # shellcheck source=/dev/null
-    source venv/bin/activate
-    print_ok "Virtual environment activated"
+    if [[ -d venv ]]; then
+        print_warn "venv/ exists but is broken — removing and recreating"
+        rm -rf venv
+    fi
     
-    # Upgrade pip
-    pip install --upgrade pip --quiet
-    print_ok "pip upgraded"
+    # Try to create venv
+    if python3 -m venv venv 2>&1 | grep -q "ensurepip is not available"; then
+        print_fail "Virtual environment creation requires python3-venv package"
+        print_info ""
+        print_info "To fix this, run on your SIFT system:"
+        print_info "  ${GREEN}sudo apt-get update && sudo apt-get install -y python3-venv python3-dev${NC}"
+        print_info ""
+        print_info "Then re-run: ${GREEN}bash setup.sh${NC}"
+        print_info ""
+        return 1
+    elif [[ ! -f venv/bin/python ]]; then
+        print_fail "Virtual environment creation failed for unknown reason"
+        return 1
+    fi
     
-    # Install requirements
+    print_ok "Virtual environment created"
+    
+    # Install dependencies using the venv python directly (no subshell needed)
+    if ! venv/bin/pip install --upgrade pip --break-system-packages --quiet 2>&1 | grep -v "externally-managed" > /dev/null 2>&1; then
+        print_warn "pip upgrade had issues, but continuing..."
+    else
+        print_ok "pip upgraded"
+    fi
+    
     if [[ -f requirements.txt ]]; then
-        pip install -r requirements.txt --quiet
-        print_ok "Dependencies installed from requirements.txt"
+        if ! venv/bin/pip install -r requirements.txt --break-system-packages --quiet 2>&1 | grep -v "externally-managed" > /dev/null 2>&1; then
+            print_warn "Some dependencies may not have installed, but venv is ready"
+        else
+            print_ok "Dependencies installed from requirements.txt"
+        fi
     else
         print_warn "requirements.txt not found — skipping dependency installation"
     fi
     
     echo ""
+    return 0
 }
 
 # ============================================================================
@@ -273,16 +295,19 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Activate venv
-if [[ -f venv/bin/activate ]]; then
+# Check if venv exists and is valid
+if [[ -f venv/bin/python ]]; then
     source venv/bin/activate
+    python ui/tui.py "$@"
 else
-    echo "Error: venv not found. Run 'bash setup.sh' first."
+    echo "Error: Virtual environment not found or broken."
+    echo ""
+    echo "To fix this, run:"
+    echo "  sudo apt-get install -y python3-venv python3-dev"
+    echo "  bash setup.sh"
+    echo ""
     exit 1
 fi
-
-# Launch TUI
-python ui/tui.py "$@"
 EOF
     
     chmod +x run.sh
@@ -299,14 +324,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-if [[ -f venv/bin/activate ]]; then
+if [[ -f venv/bin/python ]]; then
     source venv/bin/activate
+    python main.py "$@"
 else
-    echo "Error: venv not found. Run 'bash setup.sh' first."
+    echo "Error: Virtual environment not found or broken."
+    echo ""
+    echo "To fix this, run:"
+    echo "  sudo apt-get install -y python3-venv python3-dev"
+    echo "  bash setup.sh"
+    echo ""
     exit 1
 fi
-
-python main.py "$@"
 EOF
     
     chmod +x cli.sh
@@ -366,11 +395,20 @@ main() {
     print_banner
     detect_system
     setup_directories
-    setup_venv
+    
+    # Attempt venv setup with error handling
+    if ! setup_venv; then
+        print_error "Virtual environment setup failed"
+        print_info "Attempting to continue with other setup tasks..."
+    fi
+    
+    # Continue with other verifications
     verify_sift_tools
     test_mcp_server
     setup_api_key
     setup_sample_data
+    
+    # Always create launcher scripts (can be used once venv is fixed)
     generate_launcher
     create_init_files
     print_summary
