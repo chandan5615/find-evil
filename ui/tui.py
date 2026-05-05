@@ -400,7 +400,7 @@ class TriageScreen(Screen):
                 yield TriageConfigPanel()
             with Vertical(id="log_panel"):
                 yield Label("[bold #58a6ff]Execution Log[/bold #58a6ff]")
-                yield Log(id="triage_log", markup=True)
+                yield Log(id="triage_log")
         yield PhaseProgressPanel(id="progress_panel")
         yield Label("")
         yield Label("[dim]Analysis running... Press [bold]H[/bold] to cancel and return home[/dim]")
