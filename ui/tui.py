@@ -174,7 +174,7 @@ class SystemCheckScreen(Screen):
     async def _run_checks_worker(self) -> None:
         """Worker thread for system checks."""
         checks = self._perform_checks()
-        self.call_from_thread(self._update_checks_display, checks)
+        self.app.call_from_thread(self._update_checks_display, checks)
     
     def _perform_checks(self) -> list:
         """Perform all system checks."""
@@ -401,7 +401,7 @@ class TriageScreen(Screen):
             with Vertical(id="log_panel"):
                 yield Label("[bold #58a6ff]Execution Log[/bold #58a6ff]")
                 yield Log(id="triage_log")
-        yield PhaseProgressPanel(id="progress_panel")
+        yield PhaseProgressPanel()
         yield Label("")
         yield Label("[dim]Analysis running... Press [bold]H[/bold] to cancel and return home[/dim]")
         yield Footer()
@@ -420,7 +420,7 @@ class TriageScreen(Screen):
     async def _triage_worker(self) -> None:
         """Worker thread for triage execution."""
         try:
-            self.call_from_thread(self._log_message, "→ Initializing Find Evil! agent...")
+            self.app.call_from_thread(self._log_message, "→ Initializing Find Evil! agent...")
             
             # Get config values
             config_panel = self.query_one(TriageConfigPanel)
@@ -428,18 +428,18 @@ class TriageScreen(Screen):
             
             # Create logger
             logger = StructuredLogger("triage-session", verbose=False)
-            self.call_from_thread(self._log_message, "✓ Logger initialized")
+            self.app.call_from_thread(self._log_message, "✓ Logger initialized")
             
             # Initialize agent
             agent = TriageAgent(logger)
-            self.call_from_thread(self._log_message, "✓ TriageAgent initialized")
+            self.app.call_from_thread(self._log_message, "✓ TriageAgent initialized")
             
             if self.dry_run:
-                self.call_from_thread(self._log_message, "✓ Dry run validation complete")
+                self.app.call_from_thread(self._log_message, "✓ Dry run validation complete")
                 await asyncio.sleep(1)
             else:
                 # Run triage
-                self.call_from_thread(self._log_message, "→ Starting triage phases...")
+                self.app.call_from_thread(self._log_message, "→ Starting triage phases...")
                 
                 # Mock phase execution for now (in real scenario, this calls agent.run_triage())
                 for i, phase_name in enumerate([
@@ -451,39 +451,39 @@ class TriageScreen(Screen):
                     "Self-Correction",
                     "Report Generation"
                 ]):
-                    self.call_from_thread(
+                ]):                    self.app.call_from_thread(
                         self._update_phase_progress,
                         phase_name,
                         0,
                         "running"
                     )
-                    self.call_from_thread(
+                    self.app.call_from_thread(
                         self._log_message,
                         f"→ Phase {i+1}: {phase_name}... scanning artifacts"
                     )
                     
                     await asyncio.sleep(0.5)
                     
-                    self.call_from_thread(
+                    self.app.call_from_thread(
                         self._update_phase_progress,
                         phase_name,
                         100,
                         "done"
                     )
-                    self.call_from_thread(
+                    self.app.call_from_thread(
                         self._log_message,
                         f"✓ Phase {i+1} complete — processing results"
                     )
             
-            self.call_from_thread(self._log_message, "✓ Triage complete!")
-            self.call_from_thread(self._log_message, "→ Navigating to results screen...")
+            self.app.call_from_thread(self._log_message, "✓ Triage complete!")
+            self.app.call_from_thread(self._log_message, "→ Navigating to results screen...")
             await asyncio.sleep(1)
             
             self.triage_running = False
             self.app.push_screen("results")
         
         except Exception as e:
-            self.call_from_thread(self._log_message, f"[#f85149]✗ Error: {str(e)}[/#f85149]")
+            self.app.call_from_thread(self._log_message, f"[#f85149]✗ Error: {str(e)}[/#f85149]")
             self.triage_running = False
     
     def _log_message(self, message: str) -> None:
