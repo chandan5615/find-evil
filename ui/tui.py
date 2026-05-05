@@ -451,7 +451,7 @@ class TriageScreen(Screen):
                     "Self-Correction",
                     "Report Generation"
                 ]):
-                ]):                    self.app.call_from_thread(
+                    self.app.call_from_thread(
                         self._update_phase_progress,
                         phase_name,
                         0,
