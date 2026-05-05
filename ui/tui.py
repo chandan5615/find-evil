@@ -258,23 +258,27 @@ class SystemCheckScreen(Screen):
     
     def _update_checks_display(self, checks: list) -> None:
         """Update the display with check results."""
-        container = self.query_one("#checks_list", Static)
-        content = ""
-        
-        for name, status, message in checks:
-            status_map = {
-                "ok": ("[OK]", "#3fb950"),
-                "warn": ("[WARN]", "#d29922"),
-                "fail": ("[FAIL]", "#f85149"),
-            }
+        try:
+            container = self.query_one("#checks_list", Static)
+            content = ""
             
-            badge, color = status_map.get(status, ("[?]", "#8b949e"))
-            content += f"[{color}]{badge}[/{color}] {name}"
-            if message:
-                content += f" — [dim]{message}[/dim]"
-            content += "\n"
+            for name, status, message in checks:
+                status_map = {
+                    "ok": ("[OK]", "#3fb950"),
+                    "warn": ("[WARN]", "#d29922"),
+                    "fail": ("[FAIL]", "#f85149"),
+                }
+                
+                badge, color = status_map.get(status, ("[?]", "#8b949e"))
+                content += f"[{color}]{badge}[/{color}] {name}"
+                if message:
+                    content += f" — [dim]{message}[/dim]"
+                content += "\n"
+            
+            container.update(content)
+        except Exception as e:
+            print(f"[Update checks error] {str(e)}")
         
-        container.update(content)
         self.checks_complete = True
     
     def action_rerun_checks(self) -> None:
@@ -400,7 +404,7 @@ class TriageScreen(Screen):
             with Vertical(id="log_panel"):
                 yield Label("[bold #58a6ff]Execution Log[/bold #58a6ff]")
                 yield Log(id="triage_log")
-        yield PhaseProgressPanel()
+        yield PhaseProgressPanel(id="progress_panel")
         yield Label("")
         yield Label("[dim]Analysis running... Press [bold]H[/bold] to cancel and return home[/dim]")
         yield Footer()
@@ -421,9 +425,12 @@ class TriageScreen(Screen):
         try:
             self._log_message("→ Initializing Find Evil! agent...")
             
-            # Get config values
-            config_panel = self.query_one(TriageConfigPanel)
-            case_data = self.query_one("#case_data_input", Input).value or "./case_data"
+            # Get case data from config input
+            try:
+                case_data = self.query_one("#case_data_input", Input).value or "./case_data"
+            except Exception as cfg_error:
+                self._log_message(f"[#d29922]⚠ Config error: {str(cfg_error)}[/#d29922]")
+                case_data = "./case_data"
             
             # Initialize agent (TriageAgent creates its own StructuredLogger internally)
             try:
@@ -475,8 +482,14 @@ class TriageScreen(Screen):
             self._log_message("→ Navigating to results screen...")
             await asyncio.sleep(1)
             
+            # Use call_soon to push screen from async context
+            try:
+                self.app.call_soon(self.app.push_screen, "results")
+                self._log_message("✓ Results screen loaded")
+            except Exception as nav_error:
+                self._log_message(f"[#f85149]✗ Navigation failed: {str(nav_error)}[/#f85149]")
+            
             self.triage_running = False
-            self.app.push_screen("results")
         
         except Exception as e:
             self._log_message(f"[#f85149]✗ Error: {str(e)}[/#f85149]")
@@ -487,16 +500,18 @@ class TriageScreen(Screen):
         try:
             log = self.query_one("#triage_log", Log)
             log.write_line(message)
-        except Exception:
-            pass
+        except Exception as e:
+            # Log to console if widget query fails
+            print(f"[Log error] {message}: {str(e)}")
     
     def _update_phase_progress(self, phase_name: str, percentage: int, status: str) -> None:
         """Update phase progress."""
         try:
             progress = self.query_one("#progress_panel", PhaseProgressPanel)
             progress.update_phase(phase_name, percentage, status)
-        except Exception:
-            pass
+        except Exception as e:
+            # Log to console if widget query fails
+            print(f"[Progress error] {phase_name}: {str(e)}")
     
     def action_go_home(self) -> None:
         """Go back home."""
