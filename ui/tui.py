@@ -212,23 +212,37 @@ class SystemCheckScreen(Screen):
         else:
             checks.append(("Plaso (log2timeline)", "warn", "Not found in PATH"))
         
-        # Python packages
-        packages = [
+        # Python packages - required
+        required_packages = [
             ("mcp", "mcp"),
-            ("python-evtx", "evtx"),
             ("rich", "rich"),
             ("aiohttp", "aiohttp"),
             ("textual", "textual"),
+            ("anthropic", "anthropic"),
         ]
         
-        for pkg_name, import_name in packages:
+        for pkg_name, import_name in required_packages:
             try:
                 __import__(import_name)
                 checks.append((f"Package: {pkg_name}", "ok", "installed"))
             except ImportError:
                 checks.append((f"Package: {pkg_name}", "fail", "not installed"))
         
-        # MCP Server
+        # Python packages - optional (forensic tools)
+        optional_packages = [
+            ("python-evtx", "evtx"),
+            ("pytsk3", "pytsk3"),
+            ("volatility3", "volatility3"),
+        ]
+        
+        for pkg_name, import_name in optional_packages:
+            try:
+                __import__(import_name)
+                checks.append((f"Package: {pkg_name} (optional)", "ok", "installed"))
+            except ImportError:
+                checks.append((f"Package: {pkg_name} (optional)", "warn", "not installed - some features disabled"))
+        
+        # MCP Server (optional)
         try:
             result = subprocess.run(
                 ["curl", "-s", "http://localhost:8765/health"],
@@ -237,11 +251,11 @@ class SystemCheckScreen(Screen):
                 timeout=3
             )
             if "ok" in result.stdout.lower():
-                checks.append(("MCP Server", "ok", "healthy"))
+                checks.append(("MCP Server (optional)", "ok", "healthy"))
             else:
-                checks.append(("MCP Server", "warn", "not running"))
+                checks.append(("MCP Server (optional)", "warn", "not running - start with: python main.py"))
         except Exception:
-            checks.append(("MCP Server", "warn", "not running"))
+            checks.append(("MCP Server (optional)", "warn", "not running - start with: python main.py"))
         
         # Directories
         for dir_name, dir_path in [
@@ -254,6 +268,11 @@ class SystemCheckScreen(Screen):
             else:
                 checks.append((f"Directory: {dir_name}", "warn", "not found"))
         
+        # Summary note
+        checks.append(("", "", ""))
+        checks.append(("To install missing packages:", "info", "pip install -r requirements.txt"))
+        checks.append(("", "", ""))
+        
         return checks
     
     def _update_checks_display(self, checks: list) -> None:
@@ -263,10 +282,15 @@ class SystemCheckScreen(Screen):
             content = ""
             
             for name, status, message in checks:
+                if not name:  # Skip empty lines
+                    content += "\n"
+                    continue
+                    
                 status_map = {
                     "ok": ("[OK]", "#3fb950"),
                     "warn": ("[WARN]", "#d29922"),
                     "fail": ("[FAIL]", "#f85149"),
+                    "info": ("[INFO]", "#58a6ff"),
                 }
                 
                 badge, color = status_map.get(status, ("[?]", "#8b949e"))
