@@ -36,7 +36,9 @@ class SelfCorrector:
         self.max_attempts = max_attempts
         self.confidence_threshold = confidence_threshold
         self.correction_history: List[Dict[str, Any]] = []
-        self.logger = StructuredLogger(log_dir="logs")
+        # Generate unique session ID for this corrector instance
+        session_id = str(uuid.uuid4())[:8]
+        self.logger = StructuredLogger(session_id, log_dir="logs")
 
     def detect_hallucination(self, finding: Dict[str, Any]) -> Tuple[bool, str, float]:
         """
