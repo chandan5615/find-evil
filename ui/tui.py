@@ -623,7 +623,7 @@ class ResultsScreen(Screen):
 class FindEvilApp(App):
     """Main Find Evil! Terminal User Interface application."""
     
-    CSS_PATH = "ui/tui.css"
+    CSS_PATH = str(Path(__file__).parent / "tui.css")
     
     BINDINGS = [
         ("q", "quit", "Quit"),

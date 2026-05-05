@@ -136,8 +136,8 @@ Examples:
     parser.add_argument(
         "--case-data",
         type=str,
-        required=True,
-        help="Path to case data directory (required)",
+        required=False,
+        help="Path to case data directory (required unless using --dry-run)",
     )
 
     parser.add_argument(
@@ -278,6 +278,11 @@ async def main():
 
         # Parse arguments
         args = parse_arguments()
+
+        # Validate arguments
+        if not args.dry_run and not args.case_data:
+            print("\n[!] Error: --case-data is required unless using --dry-run")
+            sys.exit(1)
 
         # Validate environment
         print("\n[*] Validating environment...")
