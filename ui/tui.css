@@ -14,7 +14,7 @@ Header {
 
 Footer {
     background: $boost;
-    color: $muted;
+    color: $text-muted;
     dock: bottom;
 }
 
