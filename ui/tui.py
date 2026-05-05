@@ -12,6 +12,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
@@ -426,9 +427,16 @@ class TriageScreen(Screen):
             config_panel = self.query_one(TriageConfigPanel)
             case_data = self.query_one("#case_data_input", Input).value or "./case_data"
             
-            # Create logger
-            logger = StructuredLogger("triage-session", verbose=False)
-            self._log_message("✓ Logger initialized")
+            # Create logger with proper session ID
+            try:
+                session_id = str(uuid4())[:8]
+                log_dir = Path("./logs").resolve()  # Use absolute path
+                logger = StructuredLogger(session_id, str(log_dir), verbose=False)
+                self._log_message("✓ Logger initialized")
+            except Exception as log_error:
+                self._log_message(f"[#f85149]✗ Logger init failed: {str(log_error)}[/#f85149]")
+                self.triage_running = False
+                return
             
             # Initialize agent
             agent = TriageAgent(logger)
