@@ -49,7 +49,8 @@ class TriageAgent:
         self.config = config or {}
         
         # Initialize components
-        self.logger = StructuredLogger(log_dir=LOG_DIR)
+        session_id = str(uuid.uuid4())[:8]  # Generate unique session ID
+        self.logger = StructuredLogger(session_id, log_dir=LOG_DIR)
         self.self_corrector = SelfCorrector(max_attempts=3, confidence_threshold=CONFIDENCE_THRESHOLD)
         
         # Execution tracking
