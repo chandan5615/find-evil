@@ -12,7 +12,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from uuid import uuid4
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
@@ -31,7 +30,6 @@ from rich.console import Console
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agent.triage_agent import TriageAgent
-from agent.logger import StructuredLogger
 from benchmarks.accuracy_report import AccuracyReporter
 from mcp_server.server import FindEvilMCPServer
 import config
@@ -427,20 +425,14 @@ class TriageScreen(Screen):
             config_panel = self.query_one(TriageConfigPanel)
             case_data = self.query_one("#case_data_input", Input).value or "./case_data"
             
-            # Create logger with proper session ID
+            # Initialize agent (TriageAgent creates its own StructuredLogger internally)
             try:
-                session_id = str(uuid4())[:8]
-                log_dir = Path("./logs").resolve()  # Use absolute path
-                logger = StructuredLogger(session_id, str(log_dir), verbose=False)
-                self._log_message("✓ Logger initialized")
-            except Exception as log_error:
-                self._log_message(f"[#f85149]✗ Logger init failed: {str(log_error)}[/#f85149]")
+                agent = TriageAgent()
+                self._log_message("✓ TriageAgent initialized")
+            except Exception as agent_error:
+                self._log_message(f"[#f85149]✗ Agent init failed: {str(agent_error)}[/#f85149]")
                 self.triage_running = False
                 return
-            
-            # Initialize agent
-            agent = TriageAgent(logger)
-            self._log_message("✓ TriageAgent initialized")
             
             if self.dry_run:
                 self._log_message("✓ Dry run validation complete")
