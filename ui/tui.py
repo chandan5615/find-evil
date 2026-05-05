@@ -15,8 +15,9 @@ from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.screen import Screen
 from textual.widgets import (
-    Header, Footer, Button, Input, Label, Static, DataTable, ProgressBar, Log, Screen
+    Header, Footer, Button, Input, Label, Static, DataTable, ProgressBar, Log
 )
 from textual.widget import Widget
 from rich.panel import Panel
@@ -31,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from agent.triage_agent import TriageAgent
 from agent.logger import StructuredLogger
 from benchmarks.accuracy_report import AccuracyReporter
-from mcp_server.server import SIFTMCPServer
+from mcp_server.server import FindEvilMCPServer
 import config
 
 

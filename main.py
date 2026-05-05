@@ -31,7 +31,7 @@ except ImportError:
     RICH_AVAILABLE = False
     Console = None
 
-from mcp_server.server import SIFTMCPServer
+from mcp_server.server import FindEvilMCPServer
 from agent.triage_agent import TriageAgent
 from agent.logger import StructuredLogger
 from benchmarks.accuracy_report import AccuracyReporter
@@ -307,7 +307,7 @@ async def main():
         Path(args.output).mkdir(parents=True, exist_ok=True)
 
         print("\n[*] Starting MCP server...")
-        server = SIFTMCPServer()
+        server = FindEvilMCPServer()
         server_task = asyncio.create_task(server.start())
         await asyncio.sleep(1)  # Let server initialize
 
