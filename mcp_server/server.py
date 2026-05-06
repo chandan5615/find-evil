@@ -41,7 +41,7 @@ except ImportError:
 
 # Initialize logger with session ID
 _session_id = str(uuid.uuid4())[:8]
-logger = StructuredLogger("mcp-server", session_id=_session_id)
+logger = StructuredLogger(session_id=_session_id)
 
 # Tool definitions for MCP protocol
 DISK_TOOLS = [
