@@ -149,8 +149,8 @@ class SystemCheckScreen(Screen):
         ("h", "go_home", "Home"),
     ]
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.checks_complete = False
     
     def compose(self) -> ComposeResult:
@@ -415,8 +415,8 @@ class TriageScreen(Screen):
         ("h", "go_home", "Home"),
     ]
     
-    def __init__(self, dry_run: bool = False) -> None:
-        super().__init__()
+    def __init__(self, dry_run: bool = False, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.dry_run = dry_run
         self.triage_running = False
     
@@ -506,12 +506,16 @@ class TriageScreen(Screen):
             self._log_message("→ Navigating to results screen...")
             await asyncio.sleep(1)
             
-            # Use call_soon to push screen from async context
+            # Push results screen directly - Textual handles thread safety
             try:
-                self.app.call_soon(self.app.push_screen, "results")
+                self.app.push_screen("results")
                 self._log_message("✓ Results screen loaded")
             except Exception as nav_error:
-                self._log_message(f"[#f85149]✗ Navigation failed: {str(nav_error)}[/#f85149]")
+                error_msg = f"{type(nav_error).__name__}: {str(nav_error)}"
+                self._log_message(f"[#f85149]✗ Failed to navigate: {error_msg}[/#f85149]")
+                print(f"[ERROR] Navigation: {error_msg}", file=sys.stderr)
+            
+            self.triage_running = False
             
             self.triage_running = False
         
@@ -610,8 +614,8 @@ class ResultsScreen(Screen):
         ("q", "quit", "Quit"),
     ]
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.findings_data = self._load_findings()
     
     def compose(self) -> ComposeResult:
