@@ -388,3 +388,40 @@ class StructuredLogger:
             )
 
         return "\n".join(lines)
+
+    def log_finding(self, phase: str, finding_type: str, data: Dict[str, Any]) -> None:
+        """
+        Log a finding with metadata.
+        
+        Args:
+            phase: Current phase name (RECONNAISSANCE, DISK_ANALYSIS, etc.)
+            finding_type: Type of finding (low_confidence, suspicious_process, etc.)
+            data: Finding data dict
+        """
+        finding_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "phase": phase,
+            "finding_type": finding_type,
+            "data": data,
+        }
+        self.event_log.append(finding_entry)
+
+    def log_error(self, error_type: str, message: str, phase: Optional[str] = None) -> None:
+        """
+        Log an error or exception.
+        
+        Args:
+            error_type: Type of error (e.g., "tool_execution", "parsing", "network")
+            message: Error message
+            phase: Optional phase where error occurred
+        """
+        error_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "error_type": error_type,
+            "message": message,
+            "phase": phase,
+        }
+        self.event_log.append(error_entry)
+        
+        if self.console and RICH_AVAILABLE:
+            self.console.print(f"[red]ERROR ({error_type})[/red]: {message}")
