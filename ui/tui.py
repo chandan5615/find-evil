@@ -121,8 +121,8 @@ class HomeScreen(Screen):
 class CheckItem(Static):
     """Single system check item."""
     
-    def __init__(self, name: str, status: str, message: str = "") -> None:
-        super().__init__()
+    def __init__(self, name: str, status: str, message: str = "", id: str = None, **kwargs) -> None:
+        super().__init__(id=id, **kwargs)
         self.name = name
         self.status = status
         self.message = message
@@ -315,8 +315,8 @@ class SystemCheckScreen(Screen):
 class TriageConfigPanel(Static):
     """Configuration panel for triage."""
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, id: str = None, **kwargs) -> None:
+        super().__init__(id=id, **kwargs)
         self.config_values = {
             "case_data": "./case_data",
             "memory_dump": "",
@@ -362,8 +362,8 @@ class TriageLogPanel(Static):
 class PhaseProgressPanel(Static):
     """Panel showing phase progress bars."""
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, id: str = None, **kwargs) -> None:
+        super().__init__(id=id, **kwargs)
         self.phases = [
             "Reconnaissance",
             "Disk Analysis",
@@ -561,8 +561,8 @@ class TriageScreen(Screen):
 class ResultsMetricsRow(Static):
     """Display metrics in a row."""
     
-    def __init__(self, data: dict) -> None:
-        super().__init__()
+    def __init__(self, data: dict, id: str = None, **kwargs) -> None:
+        super().__init__(id=id, **kwargs)
         self.data = data
     
     def render(self) -> str:
@@ -578,8 +578,8 @@ class ResultsMetricsRow(Static):
 class FindingsTable(Static):
     """Scrollable findings table."""
     
-    def __init__(self, findings: list) -> None:
-        super().__init__()
+    def __init__(self, findings: list, id: str = None, **kwargs) -> None:
+        super().__init__(id=id, **kwargs)
         self.findings = findings
     
     def compose(self) -> ComposeResult:
