@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import sys
+import uuid
 from typing import Any, Dict, Optional
 
 from mcp.server import Server
@@ -38,8 +39,9 @@ try:
 except ImportError:
     AIOHTTP_AVAILABLE = False
 
-# Initialize logger
-logger = StructuredLogger("mcp-server")
+# Initialize logger with session ID
+_session_id = str(uuid.uuid4())[:8]
+logger = StructuredLogger("mcp-server", session_id=_session_id)
 
 # Tool definitions for MCP protocol
 DISK_TOOLS = [
@@ -231,30 +233,58 @@ class FindEvilMCPServer:
                 if not any(t["name"] == name for t in ALL_TOOLS):
                     raise ValueError(f"Unknown tool: {name}")
 
-                # Call appropriate tool
+                # Call appropriate tool (wrapped with asyncio.to_thread to prevent event loop blocking)
                 if name == "get_mft":
-                    result = get_mft(
+                    result = await asyncio.to_thread(
+                        get_mft,
                         arguments["image_path"],
                         arguments.get("partition", "0"),
                     )
                 elif name == "get_amcache":
-                    result = get_amcache(arguments["image_path"])
+                    result = await asyncio.to_thread(
+                        get_amcache,
+                        arguments["image_path"],
+                    )
                 elif name == "get_prefetch":
-                    result = get_prefetch(arguments["image_path"])
+                    result = await asyncio.to_thread(
+                        get_prefetch,
+                        arguments["image_path"],
+                    )
                 elif name == "get_shimcache":
-                    result = get_shimcache(arguments["image_path"])
+                    result = await asyncio.to_thread(
+                        get_shimcache,
+                        arguments["image_path"],
+                    )
                 elif name == "analyze_processes":
-                    result = analyze_processes(arguments["memory_path"])
+                    result = await asyncio.to_thread(
+                        analyze_processes,
+                        arguments["memory_path"],
+                    )
                 elif name == "check_injections":
-                    result = check_injections(arguments["memory_path"])
+                    result = await asyncio.to_thread(
+                        check_injections,
+                        arguments["memory_path"],
+                    )
                 elif name == "get_network_connections":
-                    result = get_network_connections(arguments["memory_path"])
+                    result = await asyncio.to_thread(
+                        get_network_connections,
+                        arguments["memory_path"],
+                    )
                 elif name == "parse_evtx":
-                    result = parse_evtx(arguments["log_path"])
+                    result = await asyncio.to_thread(
+                        parse_evtx,
+                        arguments["log_path"],
+                    )
                 elif name == "extract_timeline":
-                    result = extract_timeline(arguments["image_path"])
+                    result = await asyncio.to_thread(
+                        extract_timeline,
+                        arguments["image_path"],
+                    )
                 elif name == "get_registry_hives":
-                    result = get_registry_hives(arguments["image_path"])
+                    result = await asyncio.to_thread(
+                        get_registry_hives,
+                        arguments["image_path"],
+                    )
                 else:
                     raise ValueError(f"Tool {name} not implemented")
 
@@ -423,26 +453,58 @@ class FindEvilMCPServer:
             Tool output dict
         """
         try:
+            # Wrap all tool calls with asyncio.to_thread to prevent event loop blocking
             if tool_name == "get_mft":
-                result = get_mft(params["image_path"], params.get("partition", "0"))
+                result = await asyncio.to_thread(
+                    get_mft,
+                    params["image_path"],
+                    params.get("partition", "0"),
+                )
             elif tool_name == "get_amcache":
-                result = get_amcache(params["image_path"])
+                result = await asyncio.to_thread(
+                    get_amcache,
+                    params["image_path"],
+                )
             elif tool_name == "get_prefetch":
-                result = get_prefetch(params["image_path"])
+                result = await asyncio.to_thread(
+                    get_prefetch,
+                    params["image_path"],
+                )
             elif tool_name == "get_shimcache":
-                result = get_shimcache(params["image_path"])
+                result = await asyncio.to_thread(
+                    get_shimcache,
+                    params["image_path"],
+                )
             elif tool_name == "analyze_processes":
-                result = analyze_processes(params["memory_path"])
+                result = await asyncio.to_thread(
+                    analyze_processes,
+                    params["memory_path"],
+                )
             elif tool_name == "check_injections":
-                result = check_injections(params["memory_path"])
+                result = await asyncio.to_thread(
+                    check_injections,
+                    params["memory_path"],
+                )
             elif tool_name == "get_network_connections":
-                result = get_network_connections(params["memory_path"])
+                result = await asyncio.to_thread(
+                    get_network_connections,
+                    params["memory_path"],
+                )
             elif tool_name == "parse_evtx":
-                result = parse_evtx(params["log_path"])
+                result = await asyncio.to_thread(
+                    parse_evtx,
+                    params["log_path"],
+                )
             elif tool_name == "extract_timeline":
-                result = extract_timeline(params["image_path"])
+                result = await asyncio.to_thread(
+                    extract_timeline,
+                    params["image_path"],
+                )
             elif tool_name == "get_registry_hives":
-                result = get_registry_hives(params["image_path"])
+                result = await asyncio.to_thread(
+                    get_registry_hives,
+                    params["image_path"],
+                )
             else:
                 return {"status": "error", "error": f"Tool {tool_name} not implemented"}
 

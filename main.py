@@ -22,6 +22,12 @@ from pathlib import Path
 from uuid import uuid4
 
 try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+
+try:
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
@@ -107,6 +113,49 @@ def _check_package(package_name: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+async def wait_for_mcp_server(
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    max_attempts: int = 10,
+    retry_delay: float = 0.5,
+) -> bool:
+    """
+    Wait for MCP server to become healthy.
+
+    Args:
+        host: Server host
+        port: Server port
+        max_attempts: Maximum retry attempts
+        retry_delay: Delay between retries in seconds
+
+    Returns:
+        True if server is healthy, False if timeout
+    """
+    if not AIOHTTP_AVAILABLE:
+        # If aiohttp not available, just wait a bit
+        await asyncio.sleep(2)
+        return True
+
+    url = f"http://{host}:{port}/health"
+
+    for attempt in range(max_attempts):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=2)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        if data.get("status") == "healthy":
+                            return True
+        except Exception:
+            # Server not ready yet
+            pass
+
+        if attempt < max_attempts - 1:
+            await asyncio.sleep(retry_delay)
+
+    return False
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -314,7 +363,15 @@ async def main():
         print("\n[*] Starting MCP server...")
         server = FindEvilMCPServer()
         server_task = asyncio.create_task(server.start())
-        await asyncio.sleep(1)  # Let server initialize
+        
+        # Wait for MCP server to become healthy
+        if not await wait_for_mcp_server(
+            host=config.MCP_SERVER_HOST or "127.0.0.1",
+            port=config.MCP_SERVER_PORT or 8765,
+        ):
+            print("[!] Error: MCP server failed to start")
+            server_task.cancel()
+            sys.exit(1)
 
         # Initialize agent
         print("[*] Initializing triage agent...")

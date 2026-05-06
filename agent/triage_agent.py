@@ -229,7 +229,7 @@ class TriageAgent:
             phase="RECONNAISSANCE",
             finding_type="case_context",
             data={
-                "artifacts_found": len(self.case_context["artifact_count"]),
+                "artifacts_found": len(self.case_context.get("artifact_count", 0)),
                 "os_type": os_type,
                 "disk_images": len(artifacts["disk_images"]),
                 "memory_dumps": len(artifacts["memory_dumps"]),
@@ -245,7 +245,7 @@ class TriageAgent:
             "artifacts_found": artifacts,
             "os_type": os_type,
             "confidence": confidence,
-            "artifact_count": self.case_context["artifact_count"]
+            "artifact_count": self.case_context.get("artifact_count", 0)
         }
 
     async def _phase_disk_analysis(self, case_data_path: str) -> Dict[str, Any]:
@@ -341,9 +341,9 @@ class TriageAgent:
                 }
         
         # Calculate phase confidence
-        successful_tools = sum(1 for t in tool_outputs.values() if t["status"] == "success")
+        successful_tools = sum(1 for t in tool_outputs.values() if t.get("status") == "success")
         total_tools = len(tool_outputs) if tool_outputs else 1
-        avg_confidence = sum(t["confidence"] for t in tool_outputs.values()) / total_tools if tool_outputs else 0.0
+        avg_confidence = sum(t.get("confidence", 0.0) for t in tool_outputs.values()) / total_tools if tool_outputs else 0.0
         
         phase_duration = time.time() - phase_start
         self.phase_timings["DISK_ANALYSIS"] = phase_duration

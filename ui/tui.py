@@ -520,22 +520,36 @@ class TriageScreen(Screen):
             self.triage_running = False
     
     def _log_message(self, message: str) -> None:
-        """Add message to log."""
+        """Add message to log (thread-safe wrapper)."""
+        def _do_log() -> None:
+            try:
+                log = self.query_one("#triage_log", Log)
+                log.write_line(message)
+            except Exception as e:
+                # Log to console if widget query fails
+                print(f"[Log error] {message}: {str(e)}")
+        
         try:
-            log = self.query_one("#triage_log", Log)
-            log.write_line(message)
-        except Exception as e:
-            # Log to console if widget query fails
-            print(f"[Log error] {message}: {str(e)}")
+            self.call_from_thread(_do_log)
+        except RuntimeError:
+            # If not in async context, call directly
+            _do_log()
     
     def _update_phase_progress(self, phase_name: str, percentage: int, status: str) -> None:
-        """Update phase progress."""
+        """Update phase progress (thread-safe wrapper)."""
+        def _do_update() -> None:
+            try:
+                progress = self.query_one("#progress_panel", PhaseProgressPanel)
+                progress.update_phase(phase_name, percentage, status)
+            except Exception as e:
+                # Log to console if widget query fails
+                print(f"[Progress error] {phase_name}: {str(e)}")
+        
         try:
-            progress = self.query_one("#progress_panel", PhaseProgressPanel)
-            progress.update_phase(phase_name, percentage, status)
-        except Exception as e:
-            # Log to console if widget query fails
-            print(f"[Progress error] {phase_name}: {str(e)}")
+            self.call_from_thread(_do_update)
+        except RuntimeError:
+            # If not in async context, call directly
+            _do_update()
     
     def action_go_home(self) -> None:
         """Go back home."""
