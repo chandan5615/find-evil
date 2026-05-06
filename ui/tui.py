@@ -530,7 +530,7 @@ class TriageScreen(Screen):
                 print(f"[Log error] {message}: {str(e)}")
         
         try:
-            self.call_from_thread(_do_log)
+            self.app.call_from_thread(_do_log)
         except RuntimeError:
             # If not in async context, call directly
             _do_log()
@@ -546,7 +546,7 @@ class TriageScreen(Screen):
                 print(f"[Progress error] {phase_name}: {str(e)}")
         
         try:
-            self.call_from_thread(_do_update)
+            self.app.call_from_thread(_do_update)
         except RuntimeError:
             # If not in async context, call directly
             _do_update()
